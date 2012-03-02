@@ -8,7 +8,7 @@ HTML5 API docs for your Clojure project.
 Well, that's pretty easy, simply `lein-html5-docs` as a leiningen plugin.
 
 ```
-$ lein plugin install lein-html5-docs 1.0.0
+$ lein plugin install lein-html5-docs 1.0.1
 ```
 
 That's it.  If you run `lein` now, there should be a `html5-docs` task.

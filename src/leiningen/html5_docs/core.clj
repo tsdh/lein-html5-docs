@@ -283,7 +283,7 @@
                            [:meta {:charset "utf-8"}]
                            [:title (str "Namespace " nsp)]
                            [:style {:type "text/css"} css]]
-                          (let [pubs (filter (fn [v]
+                          (let [pubs (filter (fn [[s v]]
                                                ;; Exclude proxies
                                                (if-let [n (:name (meta v))]
                                                  (not (re-matches #".*\.proxy\$.*" (name n)))
