@@ -35,7 +35,7 @@ need to add to your project's `project.clj`:
 ```
 
 If your namespaces have a `:long-doc` metadata entry in addition to just
-`:doc`, this plugin will make use of it.  My convention is to use `doc` as a
+`:doc`, this plugin will make use of it.  My convention is to use `:doc` as a
 brief description of a namespace and `:long-doc` for usage examples and stuff
 like that.
 
