@@ -98,6 +98,17 @@
                   (:doc (meta (find-ns nsp)))]]])]]
        (page-footer)]])))
 
+(defn shorten [s max]
+  (loop [splits  (str/split s #"\.")
+         r ""]
+    (if (seq splits)
+      (let [f (first splits)
+            c (str r f)]
+        (if (< (count c) max)
+          (recur (rest splits) c)
+          r))
+      r)))
+
 (defn gen-ns-toc
   "Generate a TOC of the other namespaces.
   nsp is the current namespace, nsps all namespaces."
@@ -111,7 +122,10 @@
        [:td [:a {:href (str (name onsp) ".html")}
              (name onsp)]]
        [:td [:div {:class "ns-toc-entry-desc"}
-             (:doc (meta (find-ns onsp)))]]])
+             (let [d (:doc (meta (find-ns onsp)))]
+               (if (> (count d) 140)
+                 (shorten d 140)
+                 d))]]])
     [:tr
      [:td [:a {:href "index.html"} "Back to Index"]]
      [:td ""]]]])
