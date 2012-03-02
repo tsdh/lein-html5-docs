@@ -258,8 +258,12 @@
                 (println "  -" f)
                 (load-file f))
               (let [nsps (filter #(and
-                                   (re-matches (:html5-docs-ns-includes project) (name %))
-                                   (not (re-matches (:html5-docs-ns-excludes project) (name %))))
+                                   (if (:html5-docs-ns-includes project)
+                                     (re-matches (:html5-docs-ns-includes project) (name %))
+                                     true)
+                                   (if (:html5-docs-ns-excludes project)
+                                     (not (re-matches (:html5-docs-ns-excludes project) (name %)))
+                                     true))
                                  (sort (map ns-name (all-ns))))
                     index-file (str docs-dir "/index.html")]
                 (clojure.java.io/make-parents index-file)
