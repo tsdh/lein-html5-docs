@@ -241,9 +241,9 @@
            id (make-id s)]
        [:div {:id id}
         (cond
-         (fn? @v)         (gen-fn-details v s es)
-         (protocol? @v)   (gen-protocol-details v s es)
-         :else            (gen-var-details v s es))
+         (and (bound? v) (fn? @v))       (gen-fn-details v s es)
+         (and (bound? v) (protocol? @v)) (gen-protocol-details v s es)
+         :else                           (gen-var-details v s es))
         ;; Link to sources
         [:a {:href (source-link project v)} "View Source"]
         " "
