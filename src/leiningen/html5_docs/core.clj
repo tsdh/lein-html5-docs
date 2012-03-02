@@ -2,6 +2,7 @@
   (:use hiccup.core)
   (:use clojure.java.io)
   (:require [clojure.string :as str])
+  (:require clojure.stacktrace)
   (:require [clojure.pprint :as pp])
   (:import [java.io File]))
 
@@ -266,11 +267,20 @@
               (println "Loading Files")
               (println "=============")
               (println)
-              (doseq [f (files-in (or (:html5-docs-source-path project)
-                                      (:source-path project))
-                                  #".*\.clj")]
-                (println "  -" f)
-                (load-file f))
+              (let [done (atom #{})
+                    all-files (files-in (or (:html5-docs-source-path project)
+                                            (:source-path project))
+                                        #".*\.clj")]
+                (dotimes [_ 3]
+                  (doseq [f (remove @done all-files)]
+                    (try
+                      (load-file f)
+                      (swap! done conj f)
+                      (println "  -" f)
+                      (catch Throwable ex
+                        (println "  - [FAIL]" f)
+                        (binding [*out* *err*]
+                          (clojure.stacktrace/print-stack-trace ex)))))))
               (let [nsps (filter #(and
                                    (if (:html5-docs-ns-includes project)
                                      (re-matches (:html5-docs-ns-includes project) (name %))
