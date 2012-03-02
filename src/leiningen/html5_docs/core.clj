@@ -291,11 +291,12 @@
                               [:header
                                [:h1 "Namspace "(name nsp)]
                                [:h4 (:doc (meta (find-ns nsp)))]
-                               [:details
-                                [:summary "Usage Documentation"]
-                                [:pre
-                                 (or (escape-html (:long-doc (meta (find-ns nsp))))
-                                     "Currently, there're no namespace docs.")]]]
+                               (when (:long-doc (meta (find-ns nsp)))
+                                 [:details
+                                  [:summary "Usage Documentation"]
+                                  [:pre
+                                   (or (escape-html (:long-doc (meta (find-ns nsp))))
+                                       "Currently, there're no namespace docs.")]])]
                               ;; Namespace TOC
                               (gen-ns-toc nsp nsps)
                               ;; Contents

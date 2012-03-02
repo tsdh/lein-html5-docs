@@ -34,6 +34,11 @@ need to add to your project's `project.clj`:
                                 ;; github this is "https://github.com/<project>/funnyqt/blob/master/src"
 ```
 
+If your namespaces have a `:long-doc` metadata entry in addition to just
+`:doc`, this plugin will make use of it.  My convention is to use `doc` as a
+brief description of a namespace and `:long-doc` for usage examples and stuff
+like that.
+
 After this setup, simply run `lein html5-docs` in your project.
 
 ## To be done
