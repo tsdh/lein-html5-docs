@@ -283,7 +283,11 @@
                            [:meta {:charset "utf-8"}]
                            [:title (str "Namespace " nsp)]
                            [:style {:type "text/css"} css]]
-                          (let [pubs (filter identity ;;(fn [[_ v]] (:file (meta v)))
+                          (let [pubs (filter (fn [v]
+                                               ;; Exclude proxies
+                                               (if-let [n (:name (meta v))]
+                                                 (not (re-matches #".*\.proxy\$.*" (name n)))
+                                                 true))
                                              (sort (ns-publics nsp)))]
                             [:body
                              ;; Namespace Header
