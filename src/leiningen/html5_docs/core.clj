@@ -212,12 +212,19 @@
          "No docs attached."))]])
 
 (defn gen-protocol-details [v s es]
-  ;; TODO: We'd also like to show all extenders, unfortunately (extenders
-  ;; MyProt) always returns nil.
   [:div
    [:h3 "Protocol: " es]
    [:pre
-    "Signatures:\n===========\n\n"
+    "Docstring:\n==========\n\n  "
+    (escape-html
+     (or (:doc (meta v))
+         "No docs attached."))
+    "\n\nExtenders:\n==========\n\n"
+    (escape-html
+     (html
+      (for [ex (extenders @v)]
+        (indent (str "- " ex "\n")))))
+    "\nSignatures:\n===========\n\n"
     (escape-html
      (html
       (binding [pp/*print-miser-width*  60
@@ -229,11 +236,7 @@
                       (str (indent (str "\n  " d)) "\n"))))
              (for [sig (:sigs @v)
                    :let [s (second sig)]]
-               [(:name s) (:arglists s) (:doc s)])))))
-    "\nDocstring:\n==========\n\n  "
-    (escape-html
-     (or (:doc (meta v))
-         "No docs attached."))]])
+               [(:name s) (:arglists s) (:doc s)])))))]])
 
 (defn gen-var-details [v s es]
   [:div
