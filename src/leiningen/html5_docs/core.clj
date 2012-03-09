@@ -29,31 +29,41 @@
 (def css
   "body { margin: 10px;
           padding: 10px;
-          font-family:'Palatino Linotype', 'Book Antiqua', Palatino,
-                       FreeSerif, serif; }
+          background-color: #F7F7F7;
+          font-family: serif; }
+
   h1, h2, h3, h4 { color:#116275; }
+
   code { font-size:12px;
-         font-family: 'DeJaVu Sans Mono', 'Bitstream Vera Sans Mono',
-                      'Courier New', Courier, monospace; }
+         font-family: monospace; }
+
   pre { padding: 5px;
-        border: 2px dashed #D1C7AC;
-        background-color: #FBFDFF;
+        border: 1px dashed #D1C7AC;
+        background-color: #F7F7F7;
         font-size:12px;
-        font-family: 'DeJaVu Sans Mono', 'Bitstream Vera Sans Mono',
-                     'Courier New', Courier, monospace; }
+        font-family: monospace; }
+
   a { color: black; }
   a:hover { background-color: #A8DFE6; }
   a:visited { color:DarkSlateGray; }
-  section, footer, header { width: auto;
-                            float:left;
-                            clear:both; }
+
+  #top { width: 800px;
+         padding: 10px;
+         margin-left: auto;
+         margin-right: auto;
+         position: relative;
+         overflow: hidden;
+         background-color: #FFFFFF;
+         border: 2px dashed #D1C7AC; }
+
   #toc { position: fixed; right: 0; top: auto;
          height: 90%;
-         width: auto;
          margin: 10px; }
+
   #toc-listing-outer { height: 85%;
                        overflow: auto;
                        overflow-x: hidden; }
+
   #toc-listing-inner { border: 2px dashed #D1C7AC;
                        padding: 10px; }")
 
@@ -99,29 +109,30 @@
                    (str pname " API Documentation"))]
        [:style {:type "text/css"} css]]
       [:body
-       [:header
-        [:h1 pname [:small " (version " (:version project) ")"]]
-        [:h4 (:description project)]]
-       (when-let [url (:url project)]
-         [:section
-          "For more information, visit the "
-          [:a {:href url} pname " Homepage"]
-          "."])
-       (when-let [lic (:license project)]
-         [:section
-          pname " is licensed under the "
-          [:a {:href (:url lic)} (:name lic)]
-          ". " [:small (:comments lic)]])
-       [:section {:id "ns-toc"}
-        [:h2 "Namespaces"]
-        [:table
-         (for [nsp nsps]
-           [:tr
-            [:td [:a {:href (str (name nsp) ".html")}
-                  (name nsp)]]
-            [:td [:div {:class "ns-toc-entry-desc"}
-                  (shorten (strip-html (:doc (meta (find-ns nsp)))) 140)]]])]]
-       (page-footer)]])))
+       [:div {:id "top"}
+        [:header
+         [:h1 pname [:small " (version " (:version project) ")"]]
+         [:h4 (:description project)]]
+        (when-let [url (:url project)]
+          [:section
+           "For more information, visit the "
+           [:a {:href url} pname " Homepage"]
+           "."])
+        (when-let [lic (:license project)]
+          [:section
+           pname " is licensed under the "
+           [:a {:href (:url lic)} (:name lic)]
+           ". " [:small (:comments lic)]])
+        [:section {:id "ns-toc"}
+         [:h2 "Namespaces"]
+         [:table
+          (for [nsp nsps]
+            [:tr
+             [:td [:a {:href (str (name nsp) ".html")}
+                   (name nsp)]]
+             [:td [:div {:id "ns-toc-entry-desc"}
+                   (shorten (strip-html (:doc (meta (find-ns nsp)))) 140)]]])]]
+        (page-footer)]]])))
 
 (defn gen-ns-toc
   "Generate a TOC of the other namespaces.
@@ -135,7 +146,7 @@
       [:tr
        [:td [:a {:href (str (name onsp) ".html")}
              (name onsp)]]
-       [:td [:div {:class "ns-toc-entry-desc"}
+       [:td [:div {:id "ns-toc-entry-desc"}
              (shorten (strip-html (:doc (meta (find-ns onsp)))) 140)]]])
     [:tr
      [:td [:a {:href "index.html"} "Back to Index"]]
@@ -331,7 +342,7 @@
                                              (sort (ns-publics nsp)))]
                             [:body
                              ;; Namespace Header
-                             [:article {:id "top"}
+                             [:div {:id "top"}
                               [:header
                                [:h1 "Namspace "(name nsp)]
                                [:h4 (shorten (:doc (meta (find-ns nsp))) 140)]
@@ -345,8 +356,8 @@
                               ;; Contents
                               (gen-public-vars-details project pubs)
                               ;; TOC of Vars
-                              (gen-public-vars-toc pubs)]
-                             (page-footer)])]))))
+                              (gen-public-vars-toc pubs)
+                              (page-footer)]])]))))
               (println)
               (println "Finished."))]
     (when (seq err)
