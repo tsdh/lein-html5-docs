@@ -130,7 +130,7 @@
             [:tr
              [:td [:a {:href (str (name nsp) ".html")}
                    (name nsp)]]
-             [:td [:div {:id "ns-toc-entry-desc"}
+             [:td [:div
                    (shorten (strip-html (:doc (meta (find-ns nsp)))) 100)]]])]]
         (page-footer)]]])))
 
@@ -146,7 +146,7 @@
       [:tr
        [:td [:a {:href (str (name onsp) ".html")}
              (name onsp)]]
-       [:td [:div {:id "ns-toc-entry-desc"}
+       [:td [:div
              (shorten (strip-html (:doc (meta (find-ns onsp)))) 100)]]])
     [:tr
      [:td [:a {:href "index.html"} "Back to Index"]]
