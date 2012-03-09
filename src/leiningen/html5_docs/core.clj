@@ -67,6 +67,9 @@
            (clojure.string/replace "+" "PLUS")
            (clojure.string/replace "?" "QMARK"))))
 
+(defn strip-html [s]
+  (str/replace s #"<[^>]*>" ""))
+
 (defn shorten [s max]
   (if (and s (> (count s) max))
     (let [short (loop [splits  (str/split s #"\. ")
@@ -117,7 +120,7 @@
             [:td [:a {:href (str (name nsp) ".html")}
                   (name nsp)]]
             [:td [:div {:class "ns-toc-entry-desc"}
-                  (shorten (:doc (meta (find-ns nsp))) 140)]]])]]
+                  (shorten (strip-html (:doc (meta (find-ns nsp)))) 140)]]])]]
        (page-footer)]])))
 
 (defn gen-ns-toc
@@ -133,7 +136,7 @@
        [:td [:a {:href (str (name onsp) ".html")}
              (name onsp)]]
        [:td [:div {:class "ns-toc-entry-desc"}
-             (shorten (:doc (meta (find-ns onsp))) 140)]]])
+             (shorten (strip-html (:doc (meta (find-ns onsp)))) 140)]]])
     [:tr
      [:td [:a {:href "index.html"} "Back to Index"]]
      [:td ""]]]])
