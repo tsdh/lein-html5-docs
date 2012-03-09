@@ -43,9 +43,15 @@
         font-size:12px;
         font-family: monospace; }
 
-  a { color: black; }
+  a { color: #116275; }
   a:hover { background-color: #A8DFE6; }
-  a:visited { color:DarkSlateGray; }
+  a:visited { color: #276B86; }
+
+  td { padding-left: 5px; }
+
+  section, footer, header { width: auto;
+                            clear:both;
+                            float: left; }
 
   #top { width: 800px;
          padding: 10px;
