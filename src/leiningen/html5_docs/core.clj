@@ -88,17 +88,11 @@
 
 (defn shorten [s max]
   (if (and s (> (count s) max))
-    (let [short (loop [splits  (str/split s #"\. ")
-                       r ""]
-                  (if (seq splits)
-                    (let [f (first splits)
-                          c (str r f ". ")]
-                      (if (< (count c) max)
-                        (recur (rest splits) c)
-                        r))
-                    r))]
+    (let [short (str (first (str/split s #"\.\p{Space}")) ".")]
       (if (seq short)
-        short
+        (if (< (count short) max)
+          short
+          (str (subs short 0 max) "..."))
         (str (subs s 0 max) "...")))
     s))
 
@@ -137,7 +131,7 @@
              [:td [:a {:href (str (name nsp) ".html")}
                    (name nsp)]]
              [:td [:div {:id "ns-toc-entry-desc"}
-                   (shorten (strip-html (:doc (meta (find-ns nsp)))) 140)]]])]]
+                   (shorten (strip-html (:doc (meta (find-ns nsp)))) 100)]]])]]
         (page-footer)]]])))
 
 (defn gen-ns-toc
@@ -153,7 +147,7 @@
        [:td [:a {:href (str (name onsp) ".html")}
              (name onsp)]]
        [:td [:div {:id "ns-toc-entry-desc"}
-             (shorten (strip-html (:doc (meta (find-ns onsp)))) 140)]]])
+             (shorten (strip-html (:doc (meta (find-ns onsp)))) 100)]]])
     [:tr
      [:td [:a {:href "index.html"} "Back to Index"]]
      [:td ""]]]])
@@ -351,9 +345,8 @@
                              [:div {:id "top"}
                               [:header
                                [:h1 "Namspace "(name nsp)]
-                               [:h4 (shorten (:doc (meta (find-ns nsp))) 140)]
-                               (when-let [details (or (:long-doc (meta (find-ns nsp)))
-                                                      (:doc (meta (find-ns nsp))))]
+                               [:h4 (shorten (:doc (meta (find-ns nsp))) 100)]
+                               (when-let [details (:doc (meta (find-ns nsp)))]
                                  [:details
                                   [:summary "Usage Documentation"]
                                   [:pre (escape-html details)]])]

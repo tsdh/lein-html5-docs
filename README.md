@@ -36,11 +36,6 @@ want to add to your project's `project.clj`:
                                 ;; something like "https://github.com/<group>/<project>/blob/master"
 ```
 
-If your namespaces have a `:long-doc` metadata entry in addition to just
-`:doc`, this plugin will make use of it.  My convention is to use `:doc` as a
-brief description of a namespace and `:long-doc` for usage examples and stuff
-like that.
-
 After this setup, simply run `lein html5-docs` in your project.
 
 ## To be done
