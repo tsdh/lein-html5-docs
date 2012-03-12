@@ -38,7 +38,7 @@
          font-family: monospace; }
 
   pre { padding: 5px;
-        border: 1px dashed #D1C7AC;
+        border: 2px dashed DarkGray;
         background-color: #F7F7F7;
         font-size:12px;
         font-family: monospace; }
@@ -49,29 +49,15 @@
 
   td { padding-left: 5px; }
 
-  section, footer, header { width: auto;
-                            clear:both;
-                            float: left; }
+  section, footer, header { float: left; }
 
   #top { width: 800px;
          padding: 10px;
          margin-left: auto;
          margin-right: auto;
-         position: relative;
          overflow: hidden;
          background-color: #FFFFFF;
-         border: 2px dashed #D1C7AC; }
-
-  #toc { position: fixed; right: 0; top: auto;
-         height: 90%;
-         margin: 10px; }
-
-  #toc-listing-outer { height: 85%;
-                       overflow: auto;
-                       overflow-x: hidden; }
-
-  #toc-listing-inner { border: 2px dashed #D1C7AC;
-                       padding: 10px; }")
+         border: 3px solid DarkGray; }")
 
 (defn make-id
   [x]
@@ -155,13 +141,12 @@
 (defn gen-public-vars-toc
   "Generates a TOC for all public vars in pubs."
   [pubs]
-  [:div {:id "toc"}
+  [:section {:id "pubvars-toc"}
    [:h2 "Public Vars"]
-   [:div {:id "toc-listing-outer"}
-    [:div {:id "toc-listing-inner"}
-     (for [[s _] pubs]
-       [:div
-        [:a {:href (str "#" (make-id s))} (escape-html s)]])]]])
+   [:nav
+    (interpose ", "
+               (for [[s _] pubs]
+                 [:a {:href (str "#" (make-id s))} (escape-html s)]))]])
 
 (defn indent
   [s]
@@ -352,10 +337,10 @@
                                   [:pre (escape-html details)]])]
                               ;; Namespace TOC
                               (gen-ns-toc nsp nsps)
-                              ;; Contents
-                              (gen-public-vars-details project pubs)
                               ;; TOC of Vars
                               (gen-public-vars-toc pubs)
+                              ;; Contents
+                              (gen-public-vars-details project pubs)
                               (page-footer)]])]))))
               (println)
               (println "Finished."))]
