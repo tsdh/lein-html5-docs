@@ -258,9 +258,19 @@
          (and (bound? v) (protocol? @v)) (gen-protocol-details v s es)
          :else                           (gen-var-details v s es))
         ;; Link to sources
-        [:a {:href (source-link project v)} "View Source"]
+        [:a {:href "#top"} "Back to top"]
         " "
-        [:a {:href "#top"} "Back to top"]]))])
+        [:a {:href (source-link project v)} "View Source"]]))])
+
+(defn gen-usage-docs
+  [nsp]
+  (when-let [details (:doc (meta (find-ns nsp)))]
+    [:section
+     [:h2 "Usage Documentation"]
+     [:details {:open true}
+      [:summary "Show/Hide"]
+      [:pre (escape-html details)]]
+     [:a {:href "#top"} "Back to top"]]))
 
 (defmacro with-err-str
   "Evaluates exprs in a context in which *out* is bound to a fresh
@@ -330,15 +340,13 @@
                              [:div {:id "top"}
                               [:header
                                [:h1 "Namspace "(name nsp)]
-                               [:h4 (shorten (:doc (meta (find-ns nsp))) 100)]
-                               (when-let [details (:doc (meta (find-ns nsp)))]
-                                 [:details
-                                  [:summary "Usage Documentation"]
-                                  [:pre (escape-html details)]])]
+                               [:h4 (shorten (:doc (meta (find-ns nsp))) 100)]]
                               ;; Namespace TOC
                               (gen-ns-toc nsp nsps)
                               ;; TOC of Vars
                               (gen-public-vars-toc pubs)
+                              ;; Usage docs
+                              (gen-usage-docs nsp)
                               ;; Contents
                               (gen-public-vars-details project pubs)
                               (page-footer)]])]))))
