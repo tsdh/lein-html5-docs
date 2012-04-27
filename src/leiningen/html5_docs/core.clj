@@ -156,11 +156,13 @@
   (when v
     (if-let [f (:file (meta v))]
       (str (:html5-docs-repository-url project)
-           (str/replace (:source-path project)
+           (str/replace (or (:html5-docs-source-path project)
+                            (first (:source-paths project)))
                         (:root project)
                         "")
            (.replaceFirst ^String f
-                          (:source-path project)
+                          (or (:html5-docs-source-path project)
+                              (first (:source-paths project)))
                           "")
            "#L" (:line (meta v)))
       (source-link project (:protocol (meta v))))))
@@ -281,6 +283,9 @@
 
 (defn html5-docs
   [project]
+  ;; (clojure.pprint/pprint project)
+  (when-not (seq project)
+    (throw (RuntimeException. "Empty or no project map given!")))
   (let [docs-dir (or (:html5-docs-docs-dir project) "docs")
         err (with-err-str
               (println "Loading Files")
@@ -288,7 +293,7 @@
               (println)
               (let [done (atom #{})
                     all-files (files-in (or (:html5-docs-source-path project)
-                                            (:source-path project))
+                                            (first (:source-paths project)))
                                         #".*\.clj")]
                 (dotimes [_ 3]
                   (doseq [f (remove @done all-files)]
