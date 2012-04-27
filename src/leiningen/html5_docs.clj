@@ -8,4 +8,4 @@
   (eval-in-project
    project
    `(leiningen.html5-docs.core/html5-docs '~project)
-   nil nil '(require 'leiningen.html5-docs.core)))
+   '(require 'leiningen.html5-docs.core)))
