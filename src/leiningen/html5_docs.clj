@@ -1,6 +1,6 @@
 (ns leiningen.html5-docs
   "Generate HTML5 API docs."
-  (:use [leiningen.compile :only [eval-in-project]])
+  (:use [leiningen.core.eval :only [eval-in-project]])
   (:require clojure.java.shell)
   (:require clojure.string))
 

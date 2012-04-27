@@ -7,10 +7,12 @@ loads it and builds the documentation out of the metadata instead.
 ## Installation
 
 The installation is pretty easy, simply install `lein-html5-docs` as a
-leiningen plugin.
+leiningen plugin.  Version 1.1.4 is the last one that supports Leiningen 1.
+Starting with 1.2.0, Leiningen version 2 is required.
 
 ```
-$ lein plugin install lein-html5-docs 1.0.2
+$ lein plugin install lein-html5-docs 1.1.4  # for Leiningen 1
+$ lein plugin install lein-html5-docs 1.2.0  # for Leiningen 2
 ```
 
 That's it.  If you run `lein` now, there should be a `html5-docs` task.
