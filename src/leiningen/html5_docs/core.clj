@@ -47,7 +47,9 @@
   a:hover { background-color: #A8DFE6; }
   a:visited { color: #276B86; }
 
-  td { padding-left: 5px; }
+  td, th { padding-left: 5px;
+           text-align: left; }
+  th { color:#116275; }
 
   #top { width: 800px;
          padding: 10px;
@@ -362,6 +364,7 @@
                 idx))]]
             [:section
              [:table
+              [:tr [:th "Var Name"] [:th "Declaring Namespaces"]]
               (for [[sym vars] all-vars
                     :let [symid (make-id sym)]]
                 (let [vars (if (coll? vars) vars (hash-set vars))]
