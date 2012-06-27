@@ -49,8 +49,6 @@
 
   td { padding-left: 5px; }
 
-  section, footer, header { float: left; }
-
   #top { width: 800px;
          padding: 10px;
          margin-left: auto;
@@ -114,7 +112,10 @@
              [:td [:a {:href (str (name nsp) ".html")}
                    (name nsp)]]
              [:td [:div
-                   (shorten (:doc (meta (find-ns nsp))) 100)]]])]]
+                   (shorten (:doc (meta (find-ns nsp))) 100)]]])
+          [:tr
+           [:td [:a {:href "var-index.html"} "Alphabetic Var Index"]]
+           [:td ""]]]]
         (page-footer)]]])))
 
 (defn gen-ns-toc
@@ -135,10 +136,10 @@
      [:td [:a {:href "index.html"} "Back to Index Page"]]
      [:td ""]]
     [:tr
-     [:td [:a {:href "var-index.html"} "Back to Var Index"]]
+     [:td [:a {:href "var-index.html"} "Back to Alphabetic Var Index"]]
      [:td ""]]]])
 
-(defn gen-public-vars-toc
+(defn gen-ns-vars-toc
   "Generates a TOC for all public vars in pubs."
   [pubs]
   [:section {:id "pubvars-toc"}
@@ -246,7 +247,7 @@
                (or (:doc (meta v))
                    "No docs attached."))]])
 
-(defn gen-public-vars-details
+(defn gen-ns-vars-details
   "Generates detailed docs for the public vars pubs."
   [project pubs]
   [:section {:id "details"}
@@ -283,6 +284,96 @@
      (binding [*err* s#]
        ~@body
        (str s#))))
+
+(defn html-page [title contents]
+  (html
+    html-header
+    [:html
+     [:head
+      [:meta {:charset "utf-8"}]
+      [:title title]
+      [:style {:type "text/css"} css]]
+     [:body
+      contents]]))
+
+(defn ns-pubs-no-proxies [nsp]
+  (into {}
+        (filter (fn [[s v]]
+                  (if-let [n (:name (meta v))]
+                    (not (re-matches #".*\.proxy\$.*" (name n)))
+                    true))
+                (ns-publics nsp))))
+
+(defn gen-namespace-pages [nsps docs-dir project]
+  (doseq [nsp nsps]
+    (spit (let [hf (str docs-dir "/" (name nsp) ".html")]
+            (println "  -" hf)
+            hf)
+          (let [pubs (sort (ns-pubs-no-proxies nsp))]
+            (html-page
+             (str "Namespace " nsp)
+             ;; Namespace Header
+             [:div {:id "top"}
+              [:header
+               [:h1 "Namespace "(name nsp)]
+               [:h4 (shorten (:doc (meta (find-ns nsp))) 100)]]
+              ;; Namespace TOC
+              (gen-ns-toc nsp nsps)
+              ;; TOC of Vars
+              (gen-ns-vars-toc pubs)
+              ;; Usage docs
+              (gen-usage-docs nsp)
+              ;; Contents
+              (gen-ns-vars-details project pubs)
+              (page-footer)])))))
+
+(defn gen-var-index-page [nsps docs-dir]
+  (let [all-vars (sort (apply merge-with
+                              (fn [val1 val2]
+                                (if (coll? val1)
+                                  (conj val1 val2)
+                                  (sorted-set-by
+                                   (fn [v1 v2]
+                                     (compare (ns-name (:ns (meta v1)))
+                                              (ns-name (:ns (meta v2)))))
+                                   val1 val2)))
+                              (map ns-pubs-no-proxies nsps)))
+        idx (apply sorted-map
+                   (mapcat (fn [x]
+                             (let [n (first x)]
+                               [(str (first (name n))) n]))
+                           (partition-by #(first (name %)) (keys all-vars))))]
+    (spit (str docs-dir "/var-index.html")
+          (html-page
+           "Alphabetic Var Index"
+           [:div {:id "top"}
+            [:header
+             [:h1 "Alphabetic Var Index"]]
+            (gen-ns-toc nil nsps)
+            [:section
+             [:h2 "Alphabetic Var Index"]
+             [:h4 "Jump to: "
+              (interpose
+               " "
+               (map
+                (fn [[c sym]]
+                  [:a {:href (str "#" (make-id sym))}
+                   c])
+                idx))]]
+            [:section
+             [:table
+              (for [[sym vars] all-vars
+                    :let [symid (make-id sym)]]
+                (let [vars (if (coll? vars) vars (hash-set vars))]
+                  [:tr
+                   [:td [:div {:id symid} sym]]
+                   [:td
+                    (interpose ", "
+                               (for [v vars
+                                     :let [ns-name (name (ns-name (:ns (meta v))))]]
+                                 [:a {:href (str ns-name ".html#" symid)}
+                                  ns-name]))]]))]]
+            (page-footer)]))))
 
 (defn html5-docs
   [project]
@@ -322,38 +413,8 @@
                 (println "Generating Documentation")
                 (println "========================")
                 (println)
-                (doseq [nsp nsps]
-                  (spit (let [hf (str docs-dir "/" (name nsp) ".html")]
-                          (println "  -" hf)
-                          hf)
-                        (html
-                         html-header
-                         [:html
-                          [:head
-                           [:meta {:charset "utf-8"}]
-                           [:title (str "Namespace " nsp)]
-                           [:style {:type "text/css"} css]]
-                          (let [pubs (filter (fn [[s v]]
-                                               ;; Exclude proxies
-                                               (if-let [n (:name (meta v))]
-                                                 (not (re-matches #".*\.proxy\$.*" (name n)))
-                                                 true))
-                                             (sort (ns-publics nsp)))]
-                            [:body
-                             ;; Namespace Header
-                             [:div {:id "top"}
-                              [:header
-                               [:h1 "Namspace "(name nsp)]
-                               [:h4 (shorten (:doc (meta (find-ns nsp))) 100)]]
-                              ;; Namespace TOC
-                              (gen-ns-toc nsp nsps)
-                              ;; TOC of Vars
-                              (gen-public-vars-toc pubs)
-                              ;; Usage docs
-                              (gen-usage-docs nsp)
-                              ;; Contents
-                              (gen-public-vars-details project pubs)
-                              (page-footer)]])]))))
+                (gen-namespace-pages nsps docs-dir project)
+                (gen-var-index-page nsps docs-dir))
               (println)
               (println "Finished."))]
     (when (seq err)
