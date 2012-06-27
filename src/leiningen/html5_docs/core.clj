@@ -132,7 +132,7 @@
        [:td [:div
              (shorten (:doc (meta (find-ns onsp))) 100)]]])
     [:tr
-     [:td [:a {:href "index.html"} "Back to Index"]]
+     [:td [:a {:href "index.html"} "Back to Index Page"]]
      [:td ""]]]])
 
 (defn gen-public-vars-toc
@@ -143,7 +143,7 @@
    [:nav
     (interpose ", "
                (for [[s _] pubs]
-                 [:a {:href (str "#" (make-id s))} (escape-html s)]))]])
+                 [:a {:href (str "#" (make-id s))} (h s)]))]])
 
 (defn indent
   [s]
@@ -196,7 +196,7 @@
     (when-let [prot (:name (meta (:protocol (meta v))))]
       (str "Specified by protocol " (name prot) ".\n\n"))
     "Arglists:\n=========\n\n"
-    (escape-html
+    (h
      (html
       (binding [pp/*print-miser-width*  60
                 pp/*print-right-margin* 80]
@@ -205,7 +205,7 @@
                           (pp/pprint sig))))
              (:arglists (meta v))))))
     "\nDocstring:\n==========\n\n  "
-    (escape-html
+    (h
      (or (:doc (meta v))
          "No docs attached."))]])
 
@@ -214,16 +214,16 @@
    [:h3 "Protocol: " es]
    [:pre
     "Docstring:\n==========\n\n  "
-    (escape-html
+    (h
      (or (:doc (meta v))
          "No docs attached."))
     "\n\nExtenders:\n==========\n\n"
-    (escape-html
+    (h
      (html
       (for [ex (extenders @v)]
         (indent (str "- " ex "\n")))))
     "\nSignatures:\n===========\n\n"
-    (escape-html
+    (h
      (html
       (binding [pp/*print-miser-width*  60
                 pp/*print-right-margin* 80]
@@ -239,7 +239,7 @@
 (defn gen-var-details [v s es]
   [:div
    [:h3 (when (:dynamic (meta v)) "Dynamic ") "Var: " es]
-   [:pre "  " (escape-html
+   [:pre "  " (h
                (or (:doc (meta v))
                    "No docs attached."))]])
 
@@ -249,7 +249,7 @@
   [:section {:id "details"}
    [:h2 "Details of Public Vars"]
    (for [[s v] pubs]
-     (let [es (escape-html s)
+     (let [es (h s)
            id (make-id s)]
        [:div {:id id}
         (cond
@@ -268,7 +268,7 @@
      [:h2 "Usage Documentation"]
      [:details {:open true}
       [:summary "Show/Hide"]
-      [:pre (escape-html details)]]
+      [:pre (h details)]]
      [:a {:href "#top"} "Back to top"]]))
 
 (defmacro with-err-str
