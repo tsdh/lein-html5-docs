@@ -133,6 +133,9 @@
              (shorten (:doc (meta (find-ns onsp))) 100)]]])
     [:tr
      [:td [:a {:href "index.html"} "Back to Index Page"]]
+     [:td ""]]
+    [:tr
+     [:td [:a {:href "var-index.html"} "Back to Var Index"]]
      [:td ""]]]])
 
 (defn gen-public-vars-toc
@@ -291,20 +294,19 @@
               (println "Loading Files")
               (println "=============")
               (println)
-              (let [done (atom #{})
-                    all-files (files-in (or (:html5-docs-source-path project)
+              ;; Load all clojure files
+              (let [all-files (files-in (or (:html5-docs-source-path project)
                                             (first (:source-paths project)))
                                         #".*\.clj")]
-                (dotimes [_ 3]
-                  (doseq [f (remove @done all-files)]
-                    (try
-                      (load-file f)
-                      (swap! done conj f)
-                      (println "  -" f)
-                      (catch Throwable ex
-                        (println "  - [FAIL]" f)
-                        (binding [*out* *err*]
-                          (clojure.stacktrace/print-stack-trace ex)))))))
+                (doseq [f all-files]
+                  (try
+                    (load-file f)
+                    (println "  -" f)
+                    (catch Throwable ex
+                      (println "  - [FAIL]" f)
+                      (binding [*out* *err*]
+                        (clojure.stacktrace/print-stack-trace ex))))))
+              ;; Generate the docs
               (let [nsps (filter #(and
                                    (if (:html5-docs-ns-includes project)
                                      (re-matches (:html5-docs-ns-includes project) (name %))
