@@ -157,15 +157,21 @@
           (for [line (str/split-lines s)]
             (str "  " line "\n"))))
 
+(defn- ensure-trailing-slash [^String s]
+  (if (.endsWith s "/")
+    s
+    (str s "/")))
+
 (defn source-link
   [project v]
   (when v
     (if-let [f (:file (meta v))]
       (str (:html5-docs-repository-url project)
-           (str/replace (or (:html5-docs-source-path project)
-                            (first (:source-paths project)))
-                        (:root project)
-                        "")
+           (ensure-trailing-slash
+            (str/replace (or (:html5-docs-source-path project)
+                             (first (:source-paths project)))
+                         (:root project)
+                         ""))
            (.replaceFirst ^String f
                           (or (:html5-docs-source-path project)
                               (first (:source-paths project)))
