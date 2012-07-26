@@ -173,8 +173,9 @@
                          (:root project)
                          ""))
            (.replaceFirst ^String f
-                          (or (:html5-docs-source-path project)
-                              (first (:source-paths project)))
+                          (ensure-trailing-slash
+                           (or (:html5-docs-source-path project)
+                               (first (:source-paths project))))
                           "")
            "#L" (:line (meta v)))
       (source-link project (:protocol (meta v))))))

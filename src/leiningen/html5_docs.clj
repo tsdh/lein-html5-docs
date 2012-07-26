@@ -5,6 +5,6 @@
 (defn html5-docs [project]
   (eval-in-project
    (update-in project [:dependencies]
-              conj ['lein-html5-docs "1.2.2"])
+              conj ['lein-html5-docs "1.2.3"])
    `(leiningen.html5-docs.core/html5-docs '~project)
    '(require 'leiningen.html5-docs.core)))
