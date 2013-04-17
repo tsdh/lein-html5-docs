@@ -336,17 +336,20 @@
               (gen-ns-vars-details project pubs)
               (page-footer)])))))
 
+(defn all-syms-with-vars [nsps]
+  (sort (apply merge-with
+               (fn [val1 val2]
+                 (if (coll? val1)
+                   (conj val1 val2)
+                   (sorted-set-by
+                    (fn [v1 v2]
+                      (compare (ns-name (:ns (meta v1)))
+                               (ns-name (:ns (meta v2)))))
+                    val1 val2)))
+               (map ns-pubs-no-proxies nsps))))
+
 (defn gen-var-index-page [nsps docs-dir]
-  (let [all-vars (sort (apply merge-with
-                              (fn [val1 val2]
-                                (if (coll? val1)
-                                  (conj val1 val2)
-                                  (sorted-set-by
-                                   (fn [v1 v2]
-                                     (compare (ns-name (:ns (meta v1)))
-                                              (ns-name (:ns (meta v2)))))
-                                   val1 val2)))
-                              (map ns-pubs-no-proxies nsps)))
+  (let [all-vars (all-syms-with-vars nsps)
         idx (apply sorted-map
                    (mapcat (fn [x]
                              (let [n (first x)]
@@ -374,7 +377,7 @@
               [:tr [:th "Var Name"] [:th "Declaring Namespaces"]]
               (for [[sym vars] all-vars
                     :let [symid (make-id sym)]]
-                (let [vars (if (coll? vars) vars (hash-set vars))]
+                (let [vars (if (coll? vars) vars [vars])]
                   [:tr
                    [:td [:div {:id symid} sym]]
                    [:td
@@ -384,6 +387,38 @@
                                  [:a {:href (str ns-name ".html#" symid)}
                                   ns-name]))]]))]]
             (page-footer)]))))
+
+(defn gen-search-index [nsps docs-dir]
+  (let [all-vars (all-syms-with-vars nsps)
+        ;; idx = {symbol1 {qname1 link1, qname2 link2, ...}, ...}
+        idx (apply
+             sorted-map
+             (mapcat
+              (fn [[sym vars]]
+                (let [symid (make-id sym)
+                      vars (if (coll? vars) vars [vars])]
+                  [sym (apply sorted-map
+                              (mapcat
+                               (fn [v]
+                                 (let [nsname (ns-name (:ns (meta v)))
+                                       qname (str nsname "/" sym)]
+                                   [qname (str nsname ".html#" symid)]))
+                               vars))]))
+              all-vars))]
+    (spit (str docs-dir "/search.js")
+          (str "var index = {\n"
+               (apply str
+                      (interpose
+                       ", \n"
+                       (for [[sym varmap] idx]
+                         (str "  '" sym "': {"
+                              (apply str
+                                     (interpose
+                                      ", "
+                                      (for [[qn link] varmap]
+                                        (str "'" qn "': '" link "'"))))
+                              "}"))))
+               "}\n"))))
 
 (defn html5-docs
   [project]
@@ -424,7 +459,8 @@
                 (println "========================")
                 (println)
                 (gen-namespace-pages nsps docs-dir project)
-                (gen-var-index-page nsps docs-dir))
+                (gen-var-index-page nsps docs-dir)
+                (gen-search-index nsps docs-dir))
               (println)
               (println "Finished."))]
     (when (seq err)
