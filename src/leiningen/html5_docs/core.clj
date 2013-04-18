@@ -51,6 +51,12 @@
            text-align: left; }
   th { color:#116275; }
 
+  #ui-widget {
+    position: fixed;
+    top: 0em;
+    left: 0em;
+  }
+
   #top { width: 800px;
          padding: 10px;
          margin-left: auto;
@@ -58,6 +64,24 @@
          overflow: hidden;
          background-color: #FFFFFF;
          border: 3px solid DarkGray; }")
+
+(defn html-page [title contents]
+  (html
+    html-header
+    [:html
+     [:head
+      [:meta {:charset "utf-8"}]
+      [:title title]
+      [:style {:type "text/css"} css]
+      [:script {:src "http://code.jquery.com/jquery-1.9.1.js"}]
+      [:script {:src "http://code.jquery.com/ui/1.10.2/jquery-ui.js"}]
+      [:script {:src "api-search.js"}]]
+     [:body
+      [:div {:id "ui-widget"}
+       [:input {:id "api-search"
+                :placeholder "API Search"}]]
+      contents
+      (page-footer)]]))
 
 (defn make-id
   [x]
@@ -83,42 +107,34 @@
   "Generates an index page."
   [project nsps]
   (let [pname (or (:html5-docs-name project) (:name project))]
-    (html
-     html-header
-     [:html
-      [:head
-       [:meta {:charset "utf-8"}]
-       [:title (or (:html5-docs-page-title project)
-                   (str pname " API Documentation"))]
-       [:style {:type "text/css"} css]]
-      [:body
-       [:div {:id "top"}
-        [:header
-         [:h1 pname [:small " (version " (:version project) ")"]]
-         [:h4 (:description project)]]
-        (when-let [url (:url project)]
-          [:section
-           "For more information, visit the "
-           [:a {:href url} pname " Homepage"]
-           "."])
-        (when-let [lic (:license project)]
-          [:section
-           pname " is licensed under the "
-           [:a {:href (:url lic)} (:name lic)]
-           ". " [:small (:comments lic)]])
-        [:section {:id "ns-toc"}
-         [:h2 "Namespaces"]
-         [:table
-          (for [nsp nsps]
-            [:tr
-             [:td [:a {:href (str (name nsp) ".html")}
-                   (name nsp)]]
-             [:td [:div
-                   (shorten (:doc (meta (find-ns nsp))) 100)]]])
+    (html-page
+     (str pname " API Documentation")
+     [:div {:id "top"}
+      [:header
+       [:h1 pname [:small " (version " (:version project) ")"]]
+       [:h4 (:description project)]]
+      (when-let [url (:url project)]
+        [:section
+         "For more information, visit the "
+         [:a {:href url} pname " Homepage"]
+         "."])
+      (when-let [lic (:license project)]
+        [:section
+         pname " is licensed under the "
+         [:a {:href (:url lic)} (:name lic)]
+         ". " [:small (:comments lic)]])
+      [:section {:id "ns-toc"}
+       [:h2 "Namespaces"]
+       [:table
+        (for [nsp nsps]
           [:tr
-           [:td [:a {:href "var-index.html"} "Alphabetic Var Index"]]
-           [:td ""]]]]
-        (page-footer)]]])))
+           [:td [:a {:href (str (name nsp) ".html")}
+                 (name nsp)]]
+           [:td [:div
+                 (shorten (:doc (meta (find-ns nsp))) 100)]]])
+        [:tr
+         [:td [:a {:href "var-index.html"} "Alphabetic Var Index"]]
+         [:td ""]]]]])))
 
 (defn gen-ns-toc
   "Generate a TOC of the other namespaces.
@@ -135,10 +151,10 @@
        [:td [:div
              (shorten (:doc (meta (find-ns onsp))) 100)]]])
     [:tr
-     [:td [:a {:href "index.html"} "Back to Index Page"]]
+     [:td [:a {:href "index.html"} "Index Page"]]
      [:td ""]]
     [:tr
-     [:td [:a {:href "var-index.html"} "Back to Alphabetic Var Index"]]
+     [:td [:a {:href "var-index.html"} "Alphabetic Var Index"]]
      [:td ""]]]])
 
 (defn gen-ns-vars-toc
@@ -294,17 +310,6 @@
        ~@body
        (str s#))))
 
-(defn html-page [title contents]
-  (html
-    html-header
-    [:html
-     [:head
-      [:meta {:charset "utf-8"}]
-      [:title title]
-      [:style {:type "text/css"} css]]
-     [:body
-      contents]]))
-
 (defn ns-pubs-no-proxies [nsp]
   (into {}
         (filter (fn [[s v]]
@@ -333,8 +338,7 @@
               ;; Usage docs
               (gen-usage-docs nsp)
               ;; Contents
-              (gen-ns-vars-details project pubs)
-              (page-footer)])))))
+              (gen-ns-vars-details project pubs)])))))
 
 (defn all-syms-with-vars [nsps]
   (sort (apply merge-with
@@ -385,40 +389,34 @@
                                (for [v vars
                                      :let [ns-name (name (ns-name (:ns (meta v))))]]
                                  [:a {:href (str ns-name ".html#" symid)}
-                                  ns-name]))]]))]]
-            (page-footer)]))))
+                                  ns-name]))]]))]]]))))
 
 (defn gen-search-index [nsps docs-dir]
-  (let [all-vars (all-syms-with-vars nsps)
-        ;; idx = {symbol1 {qname1 link1, qname2 link2, ...}, ...}
-        idx (apply
-             sorted-map
-             (mapcat
-              (fn [[sym vars]]
-                (let [symid (make-id sym)
-                      vars (if (coll? vars) vars [vars])]
-                  [sym (apply sorted-map
-                              (mapcat
-                               (fn [v]
-                                 (let [nsname (ns-name (:ns (meta v)))
-                                       qname (str nsname "/" sym)]
-                                   [qname (str nsname ".html#" symid)]))
-                               vars))]))
-              all-vars))]
-    (spit (str docs-dir "/search.js")
-          (str "var index = {\n"
+  (let [all-vars (mapcat #(vals (ns-pubs-no-proxies %)) nsps)
+        idx (apply sorted-map
+                   (mapcat (fn [v]
+                             (let [n (:name (meta v))
+                                   nsname (ns-name (:ns (meta v)))
+                                   qname (str nsname "/" n)]
+                               [qname (str nsname ".html#" (make-id n))]))
+                           all-vars))]
+    (spit (str docs-dir "/api-search.js")
+          (str "$(function() {\n"
+               "  var index = [\n    "
                (apply str
                       (interpose
-                       ", \n"
-                       (for [[sym varmap] idx]
-                         (str "  '" sym "': {"
-                              (apply str
-                                     (interpose
-                                      ", "
-                                      (for [[qn link] varmap]
-                                        (str "'" qn "': '" link "'"))))
-                              "}"))))
-               "}\n"))))
+                       ",\n    "
+                       (for [[qn link] idx]
+                         (str "{label: \"" qn "\", value: \"" link "\"}"))))
+               "  ];\n"
+               "  $( \"#api-search\" ).autocomplete({\n"
+               "     source: index,\n"
+               "     select: function(event, ui) {\n"
+               "       window.open(ui.item.value, \"_self\");\n"
+               "       ui.item.value = \"\";"
+               "     }\n"
+               "  });\n"
+               "});\n"))))
 
 (defn html5-docs
   [project]
