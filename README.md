@@ -65,6 +65,6 @@ I'm happy to integrate patches and pull requests.
 
 ## License
 
-Copyright (C) 2012 Tassilo Horn <tassilo@member.fsf.org>
+Copyright (C) 2012-2013 Tassilo Horn <tsdh@gnu.org>
 
 Distributed under the Eclipse Public License, the same as Clojure.
