@@ -51,12 +51,13 @@ After this setup, simply run `lein html5-docs` in your project.
 
 I've written this plugin because I was unable to get
 [autodoc](http://tomfaulhaber.github.com/autodoc/) or
-[marginalia](http://fogus.me/fun/marginalia/) working for me.  So I decided to
-write my own minimal API docs generation tool.  The code of this plugin lived
-as a leiningen task in one of my projects for several month, and everything was
-hard-coded to match this very project's needs.
+[marginalia](http://fogus.me/fun/marginalia/) to give me exactly the sort of
+output I desired.  So I decided to write my own minimal API docs generation
+tool.  The code of this plugin lived as a leiningen task in one of my projects
+for several month, and everything was hard-coded to match this very project's
+needs.
 
-Now I invested some time to rip it out of there and make it a stand-alone
+Then I've invested some time to rip it out of there and make it a stand-alone
 leiningen plugin.  It should basically work for any leiningen project, but I
 didn't test it extensively.
 
@@ -67,8 +68,8 @@ There's much room for improvements:
   - I'm really not a web designer and I'm famous for my bad taste (you might
     want to ask my wife!), so the CSS and layout stuff can surely be improved
 
-  - There are probably tons of bugs.  All I can say is that it works fine for
-    my project.
+  - There might be tons of bugs.  All I can say is that it works fine for my
+    project.
 
 I'm happy to integrate patches and pull requests.
 
