@@ -12,6 +12,15 @@ Starting with 1.2.0, Leiningen version 2 is required.  For leiningen 1, use
 `lein plugin install lein-html5-docs 1.1.4`, for leiningen 2 declare the plugin
 in your `~/.lein/profiles.clj`.
 
+````
+{:user {:plugins [;; ...
+                  [lein-html5-docs "2.0.0"]
+			      ;; ...
+				  ]}}
+````
+
+Then leiningen will fetch it automatically from
+[Clojars](https://clojars.org/lein-html5-docs).
 
 If you run `lein` now, there should be a `html5-docs` task.
 
