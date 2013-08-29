@@ -7,7 +7,7 @@
   (:import [java.io File]))
 
 ;; TODO: Keep in sync with project.clj
-(def lein-html5-docs-version "2.0.1")
+(def lein-html5-docs-version "2.0.2")
 
 (defn files-in [^String dirpath pattern]
   (for [^java.io.File file (-> dirpath File. file-seq)
@@ -30,7 +30,7 @@
            :width "63" :height "64" :alt "HTML5 Powered"
            :title "HTML5 Powered"}]]
    ;; Reference the search JavaScripts as last step to make the site render as
-   ;; fast as possible. 
+   ;; fast as possible.
    [:script {:src "http://code.jquery.com/jquery-1.9.1.js"}]
    [:script {:src "http://code.jquery.com/ui/1.10.2/jquery-ui.js"}]
    [:script {:src "api-search.js"}]])
@@ -38,33 +38,8 @@
 (def css
   "body { margin: 10px;
           padding: 10px;
-          background-color: #F7F7F7;
-          font-family: serif; }
-
-  h1, h2, h3, h4 { color:#116275; }
-
-  code { font-size:12px;
-         font-family: monospace; }
-
-  pre { padding: 5px;
-        border: 2px dashed DarkGray;
-        background-color: #F7F7F7;
-        font-size:12px;
-        font-family: monospace; }
-
-  a { color: #116275; }
-  a:hover { background-color: #A8DFE6; }
-  a:visited { color: #276B86; }
-
-  td, th { padding-left: 5px;
-           text-align: left; }
-  th { color:#116275; }
-
-  #ui-widget {
-    position: fixed;
-    top: 0em;
-    left: 0em;
-  }
+          background-color: #DFE9F5;
+          font-family: sans-serif; }
 
   #top { width: 800px;
          padding: 10px;
@@ -72,7 +47,26 @@
          margin-right: auto;
          overflow: hidden;
          background-color: #FFFFFF;
-         border: 3px solid DarkGray; }")
+         color: #123154;
+         border: 3px solid #B4D3F5; }
+
+  pre { padding: 10px;
+        border: 2px dashed #B4D3F5;
+        background-color: #F0F6FD;
+        font-family: monospace; }
+
+  a { color: #4A6A8F; }
+  a:hover { background-color: #B4D3F5; }
+  a:visited { color: #425365; }
+
+  td, th { padding-left: 5px;
+           text-align: left; }
+
+  #ui-widget {
+    position: fixed;
+    top: 0em;
+    left: 0em;
+  }")
 
 (defn html-page [title contents]
   (html
@@ -83,7 +77,7 @@
       [:title title]
       [:style {:type "text/css"} css]
       [:link {:rel "stylesheet"
-              :href "http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css"}]]
+              :href "http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"}]]
      [:body
       [:div {:id "ui-widget"}
        [:input {:id "api-search"
@@ -122,7 +116,7 @@
      [:div {:id "top"}
       [:header
        [:h1 pname [:small " (version " (:version project) ")"]]
-       [:h4 (:description project)]]
+       [:p (:description project)]]
       (when-let [url (:url project)]
         [:section
          "For more information, visit the "
@@ -133,7 +127,7 @@
          pname " is licensed under the "
          [:a {:href (:url lic)} (:name lic)]
          ". " [:small (:comments lic)]])
-      [:section {:id "ns-toc"}
+      [:section {:id "all-ns-toc" :class "ns-toc"}
        [:h2 "Namespaces"]
        [:table
         (for [nsp nsps]
@@ -150,22 +144,24 @@
   "Generate a TOC of the other namespaces.
   nsp is the current namespace, nsps all namespaces."
   [nsp nsps]
-  [:section {:id "ns-toc"}
+  [:section {:id "other-ns-toc" :class "ns-toc"}
    [:h2 "Other Namespaces"]
-   [:table
-    (for [onsp nsps
-          :when (not= nsp onsp)]
-      [:tr
-       [:td [:a {:href (str (name onsp) ".html")}
-             (name onsp)]]
-       [:td [:div
-             (shorten (:doc (meta (find-ns onsp))) 100)]]])
-    [:tr
-     [:td [:a {:href "index.html"} "Index Page"]]
-     [:td ""]]
-    [:tr
-     [:td [:a {:href "var-index.html"} "Alphabetic Var Index"]]
-     [:td ""]]]])
+   [:details {:open false}
+    [:summary "Show/Hide"]
+    [:table
+     (for [onsp nsps
+           :when (not= nsp onsp)]
+       [:tr
+        [:td [:a {:href (str (name onsp) ".html")}
+              (name onsp)]]
+        [:td [:div
+              (shorten (:doc (meta (find-ns onsp))) 100)]]])
+     [:tr
+      [:td [:a {:href "index.html"} "Index Page"]]
+      [:td ""]]
+     [:tr
+      [:td [:a {:href "var-index.html"} "Alphabetic Var Index"]]
+      [:td ""]]]]])
 
 (defn gen-ns-vars-toc
   "Generates a TOC for all public vars in pubs."
@@ -225,7 +221,7 @@
 
 (defn gen-fn-details [v s es]
   [:div
-   [:h3 (cond
+   [:h4 (cond
          (constructor? v)     "Type/Record Constructor: "
          (:macro (meta v))    "Macro: "
          (:protocol (meta v)) "Protocol Method: "
@@ -250,7 +246,7 @@
 
 (defn gen-protocol-details [v s es]
   [:div
-   [:h3 "Protocol: " es]
+   [:h4 "Protocol: " es]
    [:pre
     "Docstring:\n==========\n\n  "
     (h
@@ -277,7 +273,7 @@
 
 (defn gen-var-details [v s es]
   [:div
-   [:h3 (when (:dynamic (meta v)) "Dynamic ") "Var: " es]
+   [:h4 (when (:dynamic (meta v)) "Dynamic ") "Var: " es]
    [:pre "  " (h
                (or (:doc (meta v))
                    "No docs attached."))]])
@@ -340,7 +336,7 @@
              [:div {:id "top"}
               [:header
                [:h1 "Namespace "(name nsp)]
-               [:h4 (shorten (:doc (meta (find-ns nsp))) 100)]]
+               [:p (shorten (:doc (meta (find-ns nsp))) 100)]]
               ;; Namespace TOC
               (gen-ns-toc nsp nsps)
               ;; TOC of Vars
@@ -378,7 +374,7 @@
             (gen-ns-toc nil nsps)
             [:section
              [:h2 "Alphabetic Var Index"]
-             [:h4 "Jump to: "
+             [:p "Jump to: "
               (interpose
                " "
                (map
