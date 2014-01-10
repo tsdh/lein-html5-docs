@@ -14,9 +14,9 @@ in your `~/.lein/profiles.clj`.
 
 ````
 {:user {:plugins [;; ...
-                  [lein-html5-docs "2.0.0"]
-			      ;; ...
-				  ]}}
+                  [lein-html5-docs "2.0.2"]
+                  ;; ...
+                  ]}}
 ````
 
 Then leiningen will fetch it automatically from
@@ -37,10 +37,10 @@ want to add to your project's `project.clj`:
                                 ;; src/foo, but not src/bar, src/baz, ...
 :html5-docs-ns-includes         ;; Required: A regex that is matched against namespace names.  If your
                                 ;; all your project's namespaces start with "foo.bar", then it should
-								;; be something like #"^foo\.bar.*".
+                                ;; be something like #"^foo\.bar.*".
 :html5-docs-ns-excludes         ;; Optional: A regex that is matched against namespace names.  For example,
-	                            ;; you probably want to set it to #".*\.test\..*" to exclude your test
-								;; namespaces.
+                                ;; you probably want to set it to #".*\.test\..*" to exclude your test
+                                ;; namespaces.
 :html5-docs-repository-url      ;; Required: The URL of your repository, e.g., for github projects it is
                                 ;; something like "https://github.com/<group>/<project>/blob/master"
 ```
