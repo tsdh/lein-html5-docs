@@ -43,6 +43,8 @@ want to add to your project's `project.clj`:
                                 ;; namespaces.
 :html5-docs-repository-url      ;; Required: The URL of your repository, e.g., for github projects it is
                                 ;; something like "https://github.com/<group>/<project>/blob/master"
+                                ;; May also be a fn receiving the project map and returning a string.
+                                ;; This is handy, e.g., to make the url depend on the project's version.
 ```
 
 After this setup, simply run `lein html5-docs` in your project.

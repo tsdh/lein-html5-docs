@@ -7,7 +7,7 @@
   (:import [java.io File]))
 
 ;; TODO: Keep in sync with project.clj
-(def lein-html5-docs-version "2.0.2")
+(def lein-html5-docs-version "2.1.0")
 
 (defn files-in [^String dirpath pattern]
   (for [^java.io.File file (-> dirpath File. file-seq)
@@ -188,7 +188,16 @@
   [project v]
   (when v
     (if-let [f (:file (meta v))]
-      (str (:html5-docs-repository-url project)
+      (str (let [url (:html5-docs-repository-url project)]
+             (cond
+              (string? url) url
+              ;; fns are only read as lists, so we need to eval them
+              (and (list? url)
+                   (or (= 'fn (first url))
+                       (= 'fn* (first url)))) ((eval url) project)
+              :else (throw (RuntimeException.
+                            (str ":html5-docs-repository-url must be a string or a fn but was "
+                                 url (type url))))))
            (ensure-trailing-slash
             (str/replace (or (:html5-docs-source-path project)
                              (first (:source-paths project)))
