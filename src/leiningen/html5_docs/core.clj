@@ -7,7 +7,7 @@
   (:import [java.io File]))
 
 ;; TODO: Keep in sync with project.clj
-(def lein-html5-docs-version "2.1.0")
+(def lein-html5-docs-version "2.2.0")
 
 (defn files-in [^String dirpath pattern]
   (for [^java.io.File file (-> dirpath File. file-seq)
@@ -264,21 +264,26 @@
     "\n\nExtenders:\n==========\n\n"
     (h
      (html
-      (for [ex (extenders @v)]
+      (for [ex (map ;; nil won't be printed so replace it with
+                    ;; "nil". (Protocols can be extended to nil.)
+                #(if (nil? %) "nil" %)
+                (extenders @v))]
         (indent (str "- " ex "\n")))))
     "\nSignatures:\n===========\n\n"
     (h
      (html
       (binding [pp/*print-miser-width*  60
                 pp/*print-right-margin* 80]
-        (map (fn [[n als d]]
+        (map (fn [[n al d]]
                (str (indent (with-out-str
-                              (pp/pprint `(~n ~@als))))
+                              (pp/pprint `(~n ~@al))))
                     (when d
                       (str (indent (str "\n  " d)) "\n"))))
              (for [sig (:sigs @v)
-                   :let [s (second sig)]]
-               [(:name s) (:arglists s) (:doc s)])))))]])
+                   :let [s (second sig)]
+                   al (:arglists s)]
+               [(:name s) al (when (= al (last (:arglists s)))
+                               (:doc s))])))))]])
 
 (defn gen-var-details [v s es]
   [:div
