@@ -1,16 +1,20 @@
 (ns leiningen.html5-docs.core
   (:use hiccup.core)
-  (:use clojure.java.io)
-  (:require [clojure.string :as str])
-  (:require clojure.stacktrace)
-  (:require [clojure.pprint :as pp])
+  (:require [clojure.string :as str]
+            [clojure.pprint :as pp]
+            [clojure.java.io :as io]
+            [leiningen.html5-docs.docset :as docset]
+            clojure.stacktrace)
   (:import [java.io File]))
 
 ;; TODO: Keep in sync with project.clj
-(def lein-html5-docs-version "2.2.0")
+(def lein-html5-docs-version "3.0.0")
+
+(def ^:dynamic *current-file*)
+(def ^:dynamic *docset-base* false)
 
 (defn files-in [^String dirpath pattern]
-  (for [^java.io.File file (-> dirpath File. file-seq)
+  (for [^File file (-> dirpath File. file-seq)
         :when (re-matches pattern (.getName file))]
     (.getPath file)))
 
@@ -29,11 +33,13 @@
     [:img {:src "http://www.w3.org/html/logo/badge/html5-badge-h-solo.png"
            :width "63" :height "64" :alt "HTML5 Powered"
            :title "HTML5 Powered"}]]
-   ;; Reference the search JavaScripts as last step to make the site render as
-   ;; fast as possible.
-   [:script {:src "http://code.jquery.com/jquery-1.9.1.js"}]
-   [:script {:src "http://code.jquery.com/ui/1.10.2/jquery-ui.js"}]
-   [:script {:src "api-search.js"}]])
+   (when-not *docset-base*
+     (html
+      ;; Reference the search JavaScripts as last step to make the site render as
+      ;; fast as possible.
+      [:script {:src "http://code.jquery.com/jquery-1.9.1.js"}]
+      [:script {:src "http://code.jquery.com/ui/1.10.2/jquery-ui.js"}]
+      [:script {:src "api-search.js"}]))])
 
 (def css
   "body { margin: 10px;
@@ -70,22 +76,24 @@
 
 (defn html-page [title contents]
   (html
-    html-header
-    [:html
-     [:head
-      [:meta {:charset "utf-8"}]
-      [:title title]
-      [:style {:type "text/css"} css]
-      [:link {:rel "stylesheet"
-              :href "http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"}]]
-     [:body
-      [:div {:id "ui-widget"}
-       [:input {:id "api-search"
-                :autofocus "autofocus"
-                :tabindex "1"
-                :placeholder "API Search"}]]
-      contents
-      (page-footer)]]))
+   html-header
+   [:html
+    [:head
+     [:meta {:charset "utf-8"}]
+     [:title title]
+     [:style {:type "text/css"} css]
+     [:link {:rel "stylesheet"
+             :href "http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"}]]
+    [:body
+     [:div {:id "ui-widget"}
+      (when-not *docset-base*
+        (html
+         [:input {:id "api-search"
+                  :autofocus "autofocus"
+                  :tabindex "1"
+                  :placeholder "API Search"}]))]
+     contents
+     (page-footer)]]))
 
 (defn make-id
   [x]
@@ -190,14 +198,14 @@
     (if-let [f (:file (meta v))]
       (str (let [url (:html5-docs-repository-url project)]
              (cond
-              (string? url) url
-              ;; fns are only read as lists, so we need to eval them
-              (and (list? url)
-                   (or (= 'fn (first url))
-                       (= 'fn* (first url)))) ((eval url) project)
-              :else (throw (RuntimeException.
-                            (str ":html5-docs-repository-url must be a string or a fn but was "
-                                 url (type url))))))
+               (string? url) url
+               ;; fns are only read as lists, so we need to eval them
+               (and (list? url)
+                    (or (= 'fn (first url))
+                        (= 'fn* (first url)))) ((eval url) project)
+                        :else (throw (RuntimeException.
+                                      (str ":html5-docs-repository-url must be a string or a fn but was "
+                                           url (type url))))))
            (ensure-trailing-slash
             (str/replace (or (:html5-docs-source-path project)
                              (first (:source-paths project)))
@@ -228,32 +236,40 @@
        (:name (meta v))
        (.startsWith ^String (name (:name (meta v))) "->")))
 
-(defn gen-fn-details [v s es]
-  [:div
-   [:h4 (cond
-         (constructor? v)     "Type/Record Constructor: "
-         (:macro (meta v))    "Macro: "
-         (:protocol (meta v)) "Protocol Method: "
-         :else                "Function: ")
-    es]
-   [:pre
-    (when-let [prot (:name (meta (:protocol (meta v))))]
-      (str "Specified by protocol " (name prot) ".\n\n"))
-    "Arglists:\n=========\n\n"
-    (h
-     (html
-      (binding [pp/*print-miser-width*  60
-                pp/*print-right-margin* 80]
-        (map #(let [sig `(~s ~@%)]
-                (indent (with-out-str
-                          (pp/pprint sig))))
-             (:arglists (meta v))))))
-    "\nDocstring:\n==========\n\n  "
-    (h
-     (or (:doc (meta v))
-         "No docs attached."))]])
+(defn docset-path [id]
+  (str (.getName (io/file *current-file*)) "#" id))
 
-(defn gen-protocol-details [v s es]
+(defn gen-fn-details [id v s es]
+  (let [kind (cond
+               (constructor? v)     "Constructor"
+               (:macro (meta v))    "Macro"
+               (:protocol (meta v)) "Method"
+               :else                "Function")]
+    (when *docset-base*
+      (docset/insert-into-db! *docset-base* s
+                              kind (docset-path id)))
+    [:div
+     [:h4 (str kind ": " es)]
+     [:pre
+      (when-let [prot (:name (meta (:protocol (meta v))))]
+        (str "Specified by protocol " (name prot) ".\n\n"))
+      "Arglists:\n=========\n\n"
+      (h
+       (html
+        (binding [pp/*print-miser-width*  60
+                  pp/*print-right-margin* 80]
+          (map #(let [sig `(~s ~@%)]
+                  (indent (with-out-str
+                            (pp/pprint sig))))
+               (:arglists (meta v))))))
+      "\nDocstring:\n==========\n\n  "
+      (h
+       (or (:doc (meta v))
+           "No docs attached."))]]))
+
+(defn gen-protocol-details [id v s es]
+  (when *docset-base*
+    (docset/insert-into-db! *docset-base* s "Protocol" (docset-path id)))
   [:div
    [:h4 "Protocol: " es]
    [:pre
@@ -265,7 +281,7 @@
     (h
      (html
       (for [ex (map ;; nil won't be printed so replace it with
-                    ;; "nil". (Protocols can be extended to nil.)
+                ;; "nil". (Protocols can be extended to nil.)
                 #(if (nil? %) "nil" %)
                 (extenders @v))]
         (indent (str "- " ex "\n")))))
@@ -285,7 +301,9 @@
                [(:name s) al (when (= al (last (:arglists s)))
                                (:doc s))])))))]])
 
-(defn gen-var-details [v s es]
+(defn gen-var-details [id v s es]
+  (when *docset-base*
+    (docset/insert-into-db! *docset-base* s "Variable" (docset-path id)))
   [:div
    [:h4 (when (:dynamic (meta v)) "Dynamic ") "Var: " es]
    [:pre "  " (h
@@ -302,9 +320,9 @@
            id (make-id s)]
        [:div {:id id}
         (cond
-         (and (bound? v) (fn? @v))       (gen-fn-details v s es)
-         (and (bound? v) (protocol? @v)) (gen-protocol-details v s es)
-         :else                           (gen-var-details v s es))
+          (and (bound? v) (fn? @v))       (gen-fn-details id v s es)
+          (and (bound? v) (protocol? @v)) (gen-protocol-details id v s es)
+          :else                           (gen-var-details id v s es))
         ;; Link to sources
         [:a {:href "#top"} "Back to top"]
         " "
@@ -325,7 +343,7 @@
   StringWriter.  Returns the string created by any nested printing
   calls."
   [& body]
-  `(let [s# (new java.io.StringWriter)]
+  `(let [s# (java.io.StringWriter.)]
      (binding [*err* s#]
        ~@body
        (str s#))))
@@ -340,25 +358,26 @@
 
 (defn gen-namespace-pages [nsps docs-dir project]
   (doseq [nsp nsps]
-    (spit (let [hf (str docs-dir "/" (name nsp) ".html")]
-            (println "  -" hf)
-            hf)
-          (let [pubs (sort (ns-pubs-no-proxies nsp))]
-            (html-page
-             (str "Namespace " nsp)
-             ;; Namespace Header
-             [:div {:id "top"}
-              [:header
-               [:h1 "Namespace "(name nsp)]
-               [:p (shorten (:doc (meta (find-ns nsp))) 100)]]
-              ;; Namespace TOC
-              (gen-ns-toc nsp nsps)
-              ;; TOC of Vars
-              (gen-ns-vars-toc pubs)
-              ;; Usage docs
-              (gen-usage-docs nsp)
-              ;; Contents
-              (gen-ns-vars-details project pubs)])))))
+    (binding [*current-file* (let [hf (str docs-dir "/" (name nsp) ".html")]
+                               (println "  -" hf)
+                               hf)]
+      (spit *current-file*
+            (let [pubs (sort (ns-pubs-no-proxies nsp))]
+              (html-page
+               (str "Namespace " nsp)
+               ;; Namespace Header
+               [:div {:id "top"}
+                [:header
+                 [:h1 "Namespace "(name nsp)]
+                 [:p (shorten (:doc (meta (find-ns nsp))) 100)]]
+                ;; Namespace TOC
+                (gen-ns-toc nsp nsps)
+                ;; TOC of Vars
+                (gen-ns-vars-toc pubs)
+                ;; Usage docs
+                (gen-usage-docs nsp)
+                ;; Contents
+                (gen-ns-vars-details project pubs)]))))))
 
 (defn all-syms-with-vars [nsps]
   (sort (apply merge-with
@@ -442,49 +461,77 @@
                "});\n\n"))))
 
 (defn html5-docs
-  [project]
+  [project & args]
   (println (format "Running lein-html5-docs version %s." lein-html5-docs-version))
   ;; (clojure.pprint/pprint project)
   (when-not (seq project)
     (throw (RuntimeException. "Empty or no project map given!")))
-  (let [docs-dir (or (:html5-docs-docs-dir project) "docs")
-        err (with-err-str
-              (println "Loading Files")
-              (println "=============")
-              (println)
-              ;; Load all clojure files
-              (let [all-files (files-in (or (:html5-docs-source-path project)
-                                            (first (:source-paths project)))
-                                        #".*\.clj")]
-                (doseq [f all-files]
-                  (try
-                    (load-file f)
-                    (println "  -" f)
-                    (catch Throwable ex
-                      (println "  - [FAIL]" f)
-                      (binding [*out* *err*]
-                        (clojure.stacktrace/print-stack-trace ex))))))
-              ;; Generate the docs
-              (let [nsps (filter #(and
-                                   (if (:html5-docs-ns-includes project)
-                                     (re-matches (:html5-docs-ns-includes project) (name %))
-                                     true)
-                                   (if (:html5-docs-ns-excludes project)
-                                     (not (re-matches (:html5-docs-ns-excludes project) (name %)))
-                                     true))
-                                 (sort (map ns-name (all-ns))))
-                    index-file (str docs-dir "/index.html")]
-                (clojure.java.io/make-parents index-file)
-                (spit index-file (gen-index-page project nsps))
+  (binding [*docset-base* (when (some #{":docset"} args)
+                            (str (or (:html5-docs-name project)
+                                     (:name project))
+                                 ".docset"))]
+    (let [docs-dir (if *docset-base*
+                     (let [dd (str *docset-base* "/Contents/Resources/Documents")]
+                       (io/make-parents (str dd "/"))
+                       (docset/create-docset-db-tables! *docset-base*)
+                       (docset/write-info-plist *docset-base* (or (:html5-docs-name project)
+                                                                  (:name project)))
+                       (let [[i16 i32] (:html5-docs-docset-icons project)
+                             fs (java.nio.file.FileSystems/getDefault)
+                             path (fn [p]
+                                    (let [[f & more] (str/split
+                                                      p (re-pattern
+                                                         (.getSeparator fs)))]
+                                      (.getPath
+                                       fs f (into-array String more))))
+                             copy (fn [p1 p2]
+                                    (java.nio.file.Files/copy
+                                     ^java.nio.file.Path (path p1)
+                                     ^java.nio.file.Path (path p2)
+                                     ^"[Ljava.nio.file.CopyOption;"
+                                     (into-array java.nio.file.CopyOption [])))]
+                         (copy i16 (str *docset-base* "/icon.png"))
+                         (copy i32 (str *docset-base* "/icon@2x.png")))
+                       dd)
+                     (or (:html5-docs-docs-dir project) "docs"))
+          err (with-err-str
+                (println "Loading Files")
+                (println "=============")
                 (println)
-                (println "Generating Documentation")
-                (println "========================")
+                ;; Load all clojure files
+                (let [all-files (files-in (or (:html5-docs-source-path project)
+                                              (first (:source-paths project)))
+                                          #".*\.clj")]
+                  (doseq [f all-files]
+                    (try
+                      (load-file f)
+                      (println "  -" f)
+                      (catch Throwable ex
+                        (println "  - [FAIL]" f)
+                        (binding [*out* *err*]
+                          (clojure.stacktrace/print-stack-trace ex))))))
+                ;; Generate the docs
+                (let [nsps (filter #(and
+                                     (if (:html5-docs-ns-includes project)
+                                       (re-matches (:html5-docs-ns-includes project) (name %))
+                                       true)
+                                     (if (:html5-docs-ns-excludes project)
+                                       (not (re-matches (:html5-docs-ns-excludes project) (name %)))
+                                       true))
+                                   (sort (map ns-name (all-ns))))
+                      index-file (str docs-dir "/index.html")]
+                  (io/make-parents index-file)
+                  (spit index-file (gen-index-page project nsps))
+                  (println)
+                  (println "Generating Documentation")
+                  (println "========================")
+                  (println)
+                  (gen-namespace-pages nsps docs-dir project)
+                  (gen-var-index-page nsps docs-dir)
+                  (when-not *docset-base*
+                    (gen-search-index nsps docs-dir)))
                 (println)
-                (gen-namespace-pages nsps docs-dir project)
-                (gen-var-index-page nsps docs-dir)
-                (gen-search-index nsps docs-dir))
-              (println)
-              (println "Finished."))]
-    (when (seq err)
-      (println "Some warnings occured, see html5-docs.log.")
-      (spit "html5-docs.log" err))))
+                (println "Finished."))]
+      (when (seq err)
+        (println "Some warnings occured, see html5-docs.log.")
+        (spit "html5-docs.log" err)))))

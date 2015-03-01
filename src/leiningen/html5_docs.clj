@@ -3,9 +3,9 @@
   (:use [leiningen.core.eval :only [eval-in-project]])
   (:use [leiningen.html5-docs.core :only [lein-html5-docs-version]]))
 
-(defn html5-docs [project]
+(defn html5-docs [project & args]
   (eval-in-project
    (update-in project [:dependencies]
               conj ['lein-html5-docs lein-html5-docs-version])
-   `(leiningen.html5-docs.core/html5-docs '~project)
+   `(leiningen.html5-docs.core/html5-docs '~project '~@args)
    '(require 'leiningen.html5-docs.core)))

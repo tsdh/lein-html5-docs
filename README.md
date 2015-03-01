@@ -31,7 +31,9 @@ want to add to your project's `project.clj`:
 
 ```
 :html5-docs-docs-dir            ;; Optional: where to put the HTML files.  Defaults to "docs".
-:html5-docs-name "FooBar"       ;; Optional: if specified, overrides the project :name
+:html5-docs-name                ;; Optional: if specified, overrides the project :name
+:html5-docs-docset-icons        ;; Optional: A vector of two png icons for use in the generated docset.
+                                ;; the first should be 16x16, the second 32x32.  The latter is optional.
 :html5-docs-page-title          ;; Optional: defaults to "<ProjectName> API Documentation"
 :html5-docs-source-path         ;; Optional: overrides :source-path, handy if you want to document only
                                 ;; src/foo, but not src/bar, src/baz, ...
