@@ -4,6 +4,9 @@ This [Leiningen](https://github.com/technomancy/leiningen) plugin generates
 HTML5 API docs for your Clojure project.  It doesn't parse your code, but it
 loads it and builds the documentation out of the metadata instead.
 
+Since version 3.0.0, it can also generate docsets for use with
+[Dash](http://kapeli.com/dash) and [Zeal](http://zealdocs.org/).
+
 ## Installation
 
 The installation is pretty easy, simply install `lein-html5-docs` as a
@@ -14,7 +17,7 @@ in your `~/.lein/profiles.clj`.
 
 ````
 {:user {:plugins [;; ...
-                  [lein-html5-docs "2.0.2"]
+                  [lein-html5-docs "3.0.0"]
                   ;; ...
                   ]}}
 ````
@@ -49,7 +52,9 @@ want to add to your project's `project.clj`:
                                 ;; This is handy, e.g., to make the url depend on the project's version.
 ```
 
-After this setup, simply run `lein html5-docs` in your project.
+After this setup, simply run `lein html5-docs` in your project.  To generate a
+docset for use with [Dash](http://kapeli.com/dash) and
+[Zeal](http://zealdocs.org/), run `lein html5-docs :docset`.
 
 ## To be done
 
@@ -79,6 +84,6 @@ I'm happy to integrate patches and pull requests.
 
 ## License
 
-Copyright (C) 2012-2013 Tassilo Horn <tsdh@gnu.org>
+Copyright (C) 2012-2015 Tassilo Horn <tsdh@gnu.org>
 
 Distributed under the Eclipse Public License, the same as Clojure.
