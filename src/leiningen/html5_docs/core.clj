@@ -8,7 +8,7 @@
   (:import [java.io File]))
 
 ;; TODO: Keep in sync with project.clj
-(def lein-html5-docs-version "3.0.0")
+(def lein-html5-docs-version "3.0.1")
 
 (def ^:dynamic *current-file*)
 (def ^:dynamic *docset-base* false)
@@ -236,8 +236,11 @@
        (:name (meta v))
        (.startsWith ^String (name (:name (meta v))) "->")))
 
-(defn docset-path [id]
-  (str (.getName (io/file *current-file*)) "#" id))
+(defn docset-path
+  ([]
+   (.getName (io/file *current-file*)))
+  ([id]
+   (str (.getName (io/file *current-file*)) "#" id)))
 
 (defn gen-fn-details [id v s es]
   (let [kind (cond
@@ -361,6 +364,8 @@
     (binding [*current-file* (let [hf (str docs-dir "/" (name nsp) ".html")]
                                (println "  -" hf)
                                hf)]
+      (when *docset-base*
+        (docset/insert-into-db! *docset-base* (name nsp) "Namespace" (docset-path)))
       (spit *current-file*
             (let [pubs (sort (ns-pubs-no-proxies nsp))]
               (html-page
@@ -484,12 +489,15 @@
                                                          (.getSeparator fs)))]
                                       (.getPath
                                        fs f (into-array String more))))
-                             copy (fn [p1 p2]
-                                    (java.nio.file.Files/copy
-                                     ^java.nio.file.Path (path p1)
-                                     ^java.nio.file.Path (path p2)
-                                     ^"[Ljava.nio.file.CopyOption;"
-                                     (into-array java.nio.file.CopyOption [])))]
+                             copy (fn [f1 f2]
+                                    (let [^java.nio.file.Path p1 (path f1)]
+                                      (when (.exists (.toFile p1))
+                                        (java.nio.file.Files/copy
+                                         p1 ^java.nio.file.Path (path f2)
+                                         ^"[Ljava.nio.file.CopyOption;"
+                                         (into-array
+                                          java.nio.file.CopyOption
+                                          [java.nio.file.StandardCopyOption/REPLACE_EXISTING])))))]
                          (copy i16 (str *docset-base* "/icon.png"))
                          (copy i32 (str *docset-base* "/icon@2x.png")))
                        dd)
