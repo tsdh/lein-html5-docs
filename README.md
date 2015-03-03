@@ -17,7 +17,7 @@ in your `~/.lein/profiles.clj`.
 
 ````
 {:user {:plugins [;; ...
-                  [lein-html5-docs "3.0.0"]
+                  [lein-html5-docs "3.0.1"]
                   ;; ...
                   ]}}
 ````
