@@ -7,5 +7,6 @@
   (eval-in-project
    (update-in project [:dependencies]
               conj ['lein-html5-docs lein-html5-docs-version])
-   `(leiningen.html5-docs.core/html5-docs '~project '~@args)
+   `(leiningen.html5-docs.core/html5-docs
+     '~project ~@args)
    '(require 'leiningen.html5-docs.core)))

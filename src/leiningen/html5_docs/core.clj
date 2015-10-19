@@ -8,7 +8,7 @@
   (:import [java.io File]))
 
 ;; TODO: Keep in sync with project.clj
-(def lein-html5-docs-version "3.0.1")
+(def lein-html5-docs-version "3.0.2")
 
 (def ^:dynamic *current-file*)
 (def ^:dynamic *docset-base* false)
