@@ -1,6 +1,6 @@
 ;; TODO: When bumping the version number here, be sure to bump it also in
 ;; src/leiningen/html5_docs/core.clj (var lein-html5-docs-version).
-(defproject lein-html5-docs "3.0.2"
+(defproject lein-html5-docs "3.0.3"
   :description "A HTML5 API docs generator plugin for Leiningen.  Also
 generates docsets for use with Dash (http://kapeli.com/dash) and
 Zeal (http://zealdocs.org/)."

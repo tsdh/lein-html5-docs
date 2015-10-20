@@ -8,7 +8,7 @@
   (:import [java.io File]))
 
 ;; TODO: Keep in sync with project.clj
-(def lein-html5-docs-version "3.0.2")
+(def lein-html5-docs-version "3.0.3")
 
 (def ^:dynamic *current-file*)
 (def ^:dynamic *docset-base* false)
@@ -37,8 +37,8 @@
      (html
       ;; Reference the search JavaScripts as last step to make the site render as
       ;; fast as possible.
-      [:script {:src "http://code.jquery.com/jquery-1.9.1.js"}]
-      [:script {:src "http://code.jquery.com/ui/1.10.2/jquery-ui.js"}]
+      [:script {:src "http://code.jquery.com/jquery.min.js"}]
+      [:script {:src "http://code.jquery.com/ui/1.11.4/jquery-ui.min.js"}]
       [:script {:src "api-search.js"}]))])
 
 (def css
@@ -83,7 +83,7 @@
      [:title title]
      [:style {:type "text/css"} css]
      [:link {:rel "stylesheet"
-             :href "http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"}]]
+             :href "http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css"}]]
     [:body
      [:div {:id "ui-widget"}
       (when-not *docset-base*
